@@ -41,8 +41,8 @@ module ActiveRecordRelationFilterable
         start_time = value.first
         end_time = value.last
       else
-        start_time = Time.parse(value.split('-').first)
-        end_time = Time.parse(value.split('-').last)
+        start_time = Time.parse(value.split(' - ').first)
+        end_time = Time.parse(value.split(' - ').last)
       end
 
       [start_time, end_time]
