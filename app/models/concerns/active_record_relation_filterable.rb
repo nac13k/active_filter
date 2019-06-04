@@ -28,7 +28,7 @@ module ActiveRecordRelationFilterable
       query = make_joins(params, query)
       params.each do |key, value|
         start_time, end_time = parse_daterange_to_time(value)
-        query = query.where("#{sanitize_sql(key)} between ? and ?", start_time, end_time)
+        query = query.where("#{sanitize_key(key)} between ? and ?", start_time, end_time)
       end
       query
     end
@@ -80,6 +80,8 @@ module ActiveRecordRelationFilterable
       else
         start_time = Time.parse(value.split(' - ').first)
         end_time = Time.parse(value.split(' - ').last)
+        start_time = start_time.beginning_of_day if start_time.hour.zero? and start_time.min.zero?
+        end_time = end_time.end_of_day if end_time.hour.zero? and end_time.min.zero?
       end
 
       [start_time, end_time]
