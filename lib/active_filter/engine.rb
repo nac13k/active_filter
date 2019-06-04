@@ -9,7 +9,7 @@ module ActiveFilter
     initializer 'active_filter_engine.include_concerns' do
       ActiveRecord::Base.send(:include, ActiveRecordRelationFilterable)
     end
-    
+
     protected
 
     def reloader_class
