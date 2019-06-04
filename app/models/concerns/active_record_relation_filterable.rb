@@ -17,7 +17,7 @@ module ActiveRecordRelationFilterable
       params = parse_param_keys(params)
       query = make_joins(params, query)
       params.each do |key, value|
-        query = query.where("#{ActiveRecord::Base.sanitize_sql(key)} ILIKE ?", "%#{value}%")
+        query = query.where("#{sanitize_key(key)} ILIKE ?", "%#{value}%")
       end
       query
     end
@@ -28,18 +28,25 @@ module ActiveRecordRelationFilterable
       query = make_joins(params, query)
       params.each do |key, value|
         start_time, end_time = parse_daterange_to_time(value)
-        query = query.where("#{ActiveRecord::Base.sanitize_sql(key)} between ? and ?", start_time, end_time)
+        query = query.where("#{sanitize_sql(key)} between ? and ?", start_time, end_time)
       end
       query
     end
 
     private
 
+    def sanitize_key(key)
+      key = key.to_s.split('.')
+      key = [self.name.downcase] + key if key.one?
+      key = (key[0...-1].map(&:pluralize) + key[-1..-1]).join('.')
+      ActiveRecord::Base.sanitize_sql(key)
+    end
+
     def filter_query_selector(current_query, key, value)
       if value.is_a?(Array)
-        current_query = current_query.where("#{ActiveRecord::Base.sanitize_sql(key)} IN (?)", value)
+        current_query = current_query.where("#{sanitize_key(key)} IN (?)", value)
       else
-        current_query = current_query.where("#{ActiveRecord::Base.sanitize_sql(key)} = ?", value)
+        current_query = current_query.where("#{sanitize_key(key)} = ?", value)
       end
     end
 
