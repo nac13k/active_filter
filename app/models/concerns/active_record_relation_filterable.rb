@@ -4,8 +4,7 @@ module ActiveRecordRelationFilterable
   module ClassMethods
     def filter(params)
       query = where('')
-      params = parse_param_keys(params)
-      query = make_joins(params, query)
+      params, query = make_joins(parse_param_keys(params), query)
       params.each do |key, value|
         query = filter_query_selector(query, key, value)
       end
@@ -14,8 +13,7 @@ module ActiveRecordRelationFilterable
 
     def search(params)
       query = where('')
-      params = parse_param_keys(params)
-      query = make_joins(params, query)
+      params, query = make_joins(parse_param_keys(params), query)
       params.each do |key, value|
         query = query.where("#{sanitize_key(key)} ILIKE ?", "%#{value}%")
       end
@@ -24,8 +22,7 @@ module ActiveRecordRelationFilterable
 
     def daterange_filter(params)
       query = where('')
-      params = parse_param_keys(params)
-      query = make_joins(params, query)
+      params, query = make_joins(parse_param_keys(params), query)
       params.each do |key, value|
         start_time, end_time = parse_daterange_to_time(value)
         query = query.where("#{sanitize_key(key)} between ? and ?", start_time, end_time)
@@ -51,9 +48,12 @@ module ActiveRecordRelationFilterable
     end
 
     def make_joins(params, query)
+      new_params = {}
       params.each do |key, value|
         models = key.to_s.split('.')[0...-1]
+        new_params[key] = value
         break if models.empty?
+
         if models.one?
           query = query.joins(models.first.to_sym)
         elsif models.size > 2
@@ -61,13 +61,17 @@ module ActiveRecordRelationFilterable
           join_objects = { models[1].to_sym => models[0].to_sym}
           models[2..-1].each { |model_key| join_objects = {model_key => join_objects} }
           query = query.joins(join_objects)
+          new_params.delete key
+          new_params[key.split('.')[-2..-1].join('.')] = value
         else
           models.reverse
           join_objects = { models[1].to_sym => models[0].to_sym }
           query = query.joins(join_objects)
+          new_params.delete key
+          new_params[key.split('.')[-2..-1].join('.')] = value
         end
       end
-      query
+      [new_params, query]
     end
 
     def parse_daterange_to_time(value)
