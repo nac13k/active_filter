@@ -47,27 +47,27 @@ module ActiveRecordRelationFilterable
       end
     end
 
+    def key_to_joins_params(models)
+      params = { models[1].to_sym => models[0].to_sym}
+      models[2..-1].each { |model_key| params = {model_key => params} } if models.size > 2
+      params
+    end
+
     def make_joins(params, query)
       new_params = {}
       params.each do |key, value|
         models = key.to_s.split('.')[0...-1]
-        new_params[key] = value
-        break if models.empty?
-
+        
+        if models.empty?
+          new_params[key] = value
+          break 
+        end
+        
         if models.one?
           query = query.joins(models.first.to_sym)
-        elsif models.size > 2
-          models.reverse
-          join_objects = { models[1].to_sym => models[0].to_sym}
-          models[2..-1].each { |model_key| join_objects = {model_key => join_objects} }
-          query = query.joins(join_objects)
-          new_params.delete key
-          new_params[key.split('.')[-2..-1].join('.')] = value
+          new_params[key] = value
         else
-          models.reverse
-          join_objects = { models[1].to_sym => models[0].to_sym }
-          query = query.joins(join_objects)
-          new_params.delete key
+          query = query.joins(key_to_joins_params(models))
           new_params[key.split('.')[-2..-1].join('.')] = value
         end
       end
