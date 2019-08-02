@@ -53,6 +53,14 @@ module ActiveRecordRelationFilterable
       params
     end
 
+    def add_join(query, key)
+      if query.joins_values.any?{ |x| x&.left&.name == key&.to_s }
+        query
+      else
+        query.joins(key.to_sym)
+      end
+    end
+
     def make_joins(params, query)
       new_params = {}
       params.each do |key, value|
@@ -60,14 +68,14 @@ module ActiveRecordRelationFilterable
         
         if models.empty?
           new_params[key] = value
-          break 
+          next
         end
         
         if models.one?
-          query = query.joins(models.first.to_sym)
+          query = add_join(query, models.first)
           new_params[key] = value
         else
-          query = query.joins(key_to_joins_params(models))
+          query = add_join(query, key_to_joins_params(models))
           new_params[key.split('.')[-2..-1].join('.')] = value
         end
       end
