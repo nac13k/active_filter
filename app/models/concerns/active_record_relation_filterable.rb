@@ -54,7 +54,7 @@ module ActiveRecordRelationFilterable
     end
 
     def add_join(query, key)
-      if query.joins_values.any?{ |x| x&.left&.name == key&.to_s }
+      if query.joins_values.any? { |x| x&.left&.name == key&.to_s rescue false }
         query
       else
         query.joins(key.to_sym)
