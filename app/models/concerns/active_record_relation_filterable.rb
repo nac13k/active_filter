@@ -57,7 +57,8 @@ module ActiveRecordRelationFilterable
       if query.joins_values.any? { |x| x&.left&.name == key&.to_s rescue false }
         query
       else
-        query.joins(key.to_sym)
+        key = key.to_sym if key.is_a? String
+        query.joins(key)
       end
     end
 
@@ -65,7 +66,6 @@ module ActiveRecordRelationFilterable
       new_params = {}
       params.each do |key, value|
         models = key.to_s.split('.')[0...-1]
-        
         if models.empty?
           new_params[key] = value
           next
