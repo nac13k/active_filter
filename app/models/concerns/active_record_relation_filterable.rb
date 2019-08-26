@@ -34,7 +34,7 @@ module ActiveRecordRelationFilterable
 
     def sanitize_key(key)
       key = key.to_s.split('.')
-      key = [self.name.downcase] + key if key.one?
+      key = [self.name.underscore] + key if key.one?
       key = (key[0...-1].map(&:pluralize) + key[-1..-1]).join('.')
       ActiveRecord::Base.sanitize_sql(key)
     end
@@ -70,7 +70,7 @@ module ActiveRecordRelationFilterable
           new_params[key] = value
           next
         end
-        
+
         if models.one?
           query = add_join(query, models.first)
           new_params[key] = value
