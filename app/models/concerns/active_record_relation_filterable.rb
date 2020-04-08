@@ -58,7 +58,7 @@ module ActiveRecordRelationFilterable
         query
       else
         key = key.to_sym if key.is_a? String
-        query.joins(key)
+        query.include(key)
       end
     end
 
