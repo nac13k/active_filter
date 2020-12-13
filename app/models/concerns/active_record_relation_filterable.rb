@@ -11,7 +11,7 @@ module ActiveRecordRelationFilterable
       query
     end
 
-    def search(params)
+    def active_filter_search(params)
       query = where('')
       params, query = make_joins(parse_param_keys(params), query)
       params.each do |key, value|
