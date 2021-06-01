@@ -2,7 +2,7 @@ module ActiveRecordRelationFilterable
   extend ActiveSupport::Concern
 
   module ClassMethods
-    def filter(params)
+    def af_filter(params)
       query = where('')
       params, query = make_joins(parse_param_keys(params), query)
       params.each do |key, value|
@@ -11,7 +11,7 @@ module ActiveRecordRelationFilterable
       query
     end
 
-    def active_filter_search(params)
+    def af_search(params)
       query = where('')
       params, query = make_joins(parse_param_keys(params), query)
       params.each do |key, value|
@@ -20,7 +20,7 @@ module ActiveRecordRelationFilterable
       query
     end
 
-    def daterange_filter(params)
+    def af_daterange(params)
       query = where('')
       params, query = make_joins(parse_param_keys(params), query)
       params.each do |key, value|
