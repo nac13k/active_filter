@@ -25,27 +25,39 @@ module ActiveRecordRelationFilterable
       params, query = make_joins(parse_param_keys(params), query)
       params.each do |key, value|
         start_time, end_time = parse_daterange_to_time(value)
-        query = query.where("#{sanitize_key(key)} between ? and ?", start_time, end_time)
+        query = query.where(field_query_to_rails_query(key, [start_time..end_time]))
+        # query = query.where("#{sanitize_key(key)} between ? and ?", start_time, end_time)
       end
       query
     end
 
     private
 
-    def sanitize_key(key)
-      key = key.to_s.split('.')
-      key = [self.name.underscore] + key if key.one?
-      key = (key[0...-1].map(&:pluralize) + key[-1..-1]).join('.')
-      ActiveRecord::Base.sanitize_sql(key)
+    # def sanitize_key(key)
+    #   key = key.to_s.split('.')
+    #   key = [self.name.underscore] + key if key.one?
+    #   key = (key[0...-1].map(&:pluralize) + key[-1..-1]).join('.')
+    #   ActiveRecord::Base.sanitize_sql(key)
+    # end
+
+    def field_query_to_rails_query(path, value)
+      path = path.to_s if path.is_a? Symbol
+      tables = path.split('.')
+      tables.reverse.inject(value) { |assigned_value, key| { key => assigned_value } }
+    end
+    
+    def filter_query_selector(current_query, key, value)
+      current_query = current_query.where(field_query_to_rails_query(key, value))
+      current_query
     end
 
-    def filter_query_selector(current_query, key, value)
-      if value.is_a?(Array)
-        current_query = current_query.where("#{sanitize_key(key)} IN (?)", value)
-      else
-        current_query = current_query.where("#{sanitize_key(key)} = ?", value)
-      end
-    end
+    # def filter_query_selector(current_query, key, value)
+    #   if value.is_a?(Array)
+    #     current_query = current_query.where("#{sanitize_key(key)} IN (?)", value)
+    #   else
+    #     current_query = current_query.where("#{sanitize_key(key)} = ?", value)
+    #   end
+    # end
 
     def key_to_joins_params(models)
       params = { models[1].to_sym => models[0].to_sym}
