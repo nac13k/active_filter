@@ -3,33 +3,43 @@ module ActiveRecordRelationFilterable
 
   module ClassMethods
     def filter_af(params)
-      query = where('')
-      range_params, params, search_params = extract_params(params)
-      params, query = make_joins(parse_param_keys(params), query)
-      params.each do |key, value|
-        query = filter_query_selector(query, key, value)
+      query = where(nil)
+      range_params, params, new_search_params = extract_params(params)
+      rp, fp, sp = params_are_empty?(range_params, params, new_search_params)
+      if fp
+        params, query = make_joins(parse_param_keys(params), query)
+        params.each do |key, value|
+          query = filter_query_selector(query, key, value)
+        end
       end
-      query = daterange_af(query, range_params) if range_params.any?
-      query = search_af(query, search_params) if search_params.any?
+      query = daterange_af(query, range_params) if rp
+      query = search_af(query, new_search_params) if sp
       query
     end
 
     private
 
+    def params_are_empty?(range_params, params, new_search_params)
+      rp = range_params.any? { |r, v| v.any? }
+      fp = params.any? { |r, v| v }
+      sp = new_search_params.any? { |r, v| v }
+      [rp, fp, sp]
+    end
+
     def extract_params(params)
       range_params = {}
       new_params = {}
-      search_params = {}
+      new_search_params = {}
       params.each do |k, v|
         if k.to_s.include?('range')
            range_params[k] = v
         elsif k.to_s.match(/(text)/)
-          search_params[k] = v
+          new_search_params[k] = v
         else
           new_params[k] = v
         end
       end
-      [range_params, new_params, search_params]
+      [range_params, new_params, new_search_params]
     end
 
     def search_af(query, params)
