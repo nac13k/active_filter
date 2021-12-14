@@ -6,12 +6,7 @@ module ActiveRecordRelationFilterable
       query = where(nil)
       range_params, params, new_search_params = extract_params(params)
       rp, fp, sp = params_are_empty?(range_params, params, new_search_params)
-      if fp
-        params, query = make_joins(parse_param_keys(params), query)
-        params.each do |key, value|
-          query = filter_query_selector(query, key, value)
-        end
-      end
+      query = filter_query(query, params) if fp
       query = daterange_af(query, range_params) if rp
       query = search_af(query, new_search_params) if sp
       query
@@ -42,14 +37,18 @@ module ActiveRecordRelationFilterable
       [range_params, new_params, new_search_params]
     end
 
+    def filter_query(query, params)
+      params, query = make_joins(parse_param_keys(params), query)
+      params.each do |key, value|
+        query = filter_query_selector(query, key, value)
+      end
+      query
+    end
+
     def search_af(query, params)
       text = params[:text]
-      ilike_query = ""
       params, query = make_search_joins(parse_search_param_keys(params), query)
-      params.each_with_index do |key, i|
-        ilike_query += "#{key} ILIKE :text"
-        ilike_query += " OR " if params.length > 1 and (i+1) != params.length
-      end
+      ilike_query = params.join(' ILIKE :text OR ') + " ILIKE :text"
       query = query.where(ilike_query, text: "%#{text}%")
       query
     end
@@ -77,7 +76,7 @@ module ActiveRecordRelationFilterable
     end
     
     def filter_query_selector(current_query, key, value)
-      current_query = current_query.where(field_query_to_rails_query(key, value))
+      current_query = current_query.where(field_query_to_rails_query(key, value)) unless value.nil?
       current_query
     end
 
@@ -116,7 +115,7 @@ module ActiveRecordRelationFilterable
 
         transform_association = ""
         reflect_on_all_associations.each do |a|
-          transform_association = a.name if a.plural_name == models[0]
+          transform_association = a.name if a.plural_name == models[0] || a.name.to_s == models[0]
         end
 
         if models.empty?
