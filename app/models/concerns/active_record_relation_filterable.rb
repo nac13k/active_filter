@@ -27,7 +27,7 @@ module ActiveRecordRelationFilterable
       new_search_params = {}
       params.each do |k, v|
         if k.to_s.include?('range')
-           range_params[k] = v.compact
+           range_params[k] = v
         elsif k.to_s.match(/(text)/)
           new_search_params[k] = v
         else
